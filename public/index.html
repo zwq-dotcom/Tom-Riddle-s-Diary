@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tom Riddle's Diary</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Cover Page -->
+    <div id="cover-page" class="page active">
+      <div class="diary-cover">
+        <div class="slytherin-emblem">🐍</div>
+        <h1 class="title">Tom Riddle's Diary</h1>
+        <p class="subtitle">汤姆·里德尔的日记本</p>
+        <div class="ornament">✦ ✦ ✦</div>
+        <button id="open-diary-btn" class="magic-button">Open the Diary</button>
+        <p class="hint">打开日记本</p>
+      </div>
+    </div>
+
+    <!-- Login/Register Modal -->
+    <div id="auth-modal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="auth-tabs">
+          <button class="tab-btn active" data-tab="login">Login 登录</button>
+          <button class="tab-btn" data-tab="register">Register 注册</button>
+        </div>
+        
+        <form id="login-form" class="auth-form active">
+          <div class="form-group">
+            <label for="login-username">Username 用户名</label>
+            <input type="text" id="login-username" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password 密码</label>
+            <input type="password" id="login-password" required>
+          </div>
+          <button type="submit" class="submit-btn">Login 登录</button>
+        </form>
+
+        <form id="register-form" class="auth-form">
+          <div class="form-group">
+            <label for="reg-username">Username 用户名</label>
+            <input type="text" id="reg-username" required minlength="3">
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Password 密码</label>
+            <input type="password" id="reg-password" required minlength="6">
+          </div>
+          <div class="form-group">
+            <label for="reg-lang">AI Language AI语言</label>
+            <select id="reg-lang">
+              <option value="cn">中文 Chinese</option>
+              <option value="en">English 英文</option>
+            </select>
+          </div>
+          <button type="submit" class="submit-btn">Register 注册</button>
+        </form>
+
+        <div id="auth-message" class="message"></div>
+      </div>
+    </div>
+
+    <!-- Diary Page -->
+    <div id="diary-page" class="page">
+      <header class="diary-header">
+        <div class="user-info">
+          <span id="welcome-user">Welcome</span>
+          <button id="logout-btn" class="small-btn">Logout 退出</button>
+        </div>
+        <div class="mode-switch">
+          <label class="switch">
+            <input type="checkbox" id="ai-mode-toggle">
+            <span class="slider"></span>
+          </label>
+          <span class="mode-label">AI Mode: <span id="mode-status">OFF</span></span>
+        </div>
+      </header>
+
+      <main class="diary-main">
+        <div class="diary-book">
+          <div class="page-content">
+            <textarea id="diary-input" placeholder="Write your diary here... 在这里写下你的日记..."></textarea>
+          </div>
+          <div id="ai-response" class="ai-response hidden">
+            <div class="response-header">Tom Riddle 汤姆·里德尔</div>
+            <div class="response-content"></div>
+          </div>
+          <div class="diary-actions">
+            <button id="save-btn" class="action-btn">Save 保存</button>
+            <button id="clear-btn" class="action-btn secondary">Clear 清空</button>
+          </div>
+        </div>
+
+        <aside class="diary-history">
+          <h3>History 历史记录</h3>
+          <div id="history-list" class="history-list">
+            <p class="no-history">No entries yet 暂无记录</p>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

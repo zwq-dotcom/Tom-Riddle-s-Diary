@@ -1,0 +1,611 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --slytherin-green: #1a472a;
+  --slytherin-dark: #0d2818;
+  --slytherin-light: #2d6a4f;
+  --gold: #d4af37;
+  --parchment: #f4e4bc;
+  --parchment-dark: #d4c4a0;
+  --ink: #1a1a1a;
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+
+body {
+  font-family: 'Noto Serif SC', 'Georgia', serif;
+  background: linear-gradient(135deg, var(--slytherin-dark) 0%, var(--slytherin-green) 50%, var(--slytherin-dark) 100%);
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+.page {
+  display: none;
+  min-height: 100vh;
+}
+
+.page.active {
+  display: block;
+}
+
+/* Cover Page */
+#cover-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%231a472a" width="100" height="100"/><circle fill="%230d2818" cx="50" cy="50" r="40" opacity="0.3"/></svg>');
+}
+
+.diary-cover {
+  text-align: center;
+  padding: 60px;
+  background: linear-gradient(145deg, var(--slytherin-green), var(--slytherin-dark));
+  border: 3px solid var(--gold);
+  border-radius: 10px;
+  box-shadow: 0 20px 60px var(--shadow), inset 0 0 30px rgba(212, 175, 55, 0.1);
+}
+
+.slytherin-emblem {
+  font-size: 80px;
+  margin-bottom: 20px;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { filter: drop-shadow(0 0 10px var(--gold)); }
+  to { filter: drop-shadow(0 0 30px var(--gold)); }
+}
+
+.title {
+  font-family: 'Cinzel', serif;
+  font-size: 48px;
+  color: var(--gold);
+  text-shadow: 2px 2px 4px var(--shadow);
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 20px;
+  color: var(--parchment);
+  margin-bottom: 20px;
+}
+
+.ornament {
+  color: var(--gold);
+  font-size: 24px;
+  margin-bottom: 30px;
+  letter-spacing: 10px;
+}
+
+.magic-button {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  padding: 15px 40px;
+  background: transparent;
+  border: 2px solid var(--gold);
+  color: var(--gold);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.magic-button:hover {
+  background: var(--gold);
+  color: var(--slytherin-dark);
+  box-shadow: 0 0 20px var(--gold);
+}
+
+.hint {
+  color: var(--parchment-dark);
+  font-size: 14px;
+  margin-top: 15px;
+  opacity: 0.8;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal.active {
+  display: flex;
+}
+
+.modal-content {
+  background: var(--parchment);
+  padding: 40px;
+  border-radius: 10px;
+  border: 2px solid var(--gold);
+  width: 90%;
+  max-width: 400px;
+  position: relative;
+  box-shadow: 0 20px 60px var(--shadow);
+}
+
+.close {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--slytherin-green);
+}
+
+.auth-tabs {
+  display: flex;
+  margin-bottom: 20px;
+  border-bottom: 2px solid var(--slytherin-green);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  border: none;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--slytherin-dark);
+  transition: all 0.3s;
+}
+
+.tab-btn.active {
+  background: var(--slytherin-green);
+  color: var(--gold);
+}
+
+.auth-form {
+  display: none;
+}
+
+.auth-form.active {
+  display: block;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: var(--slytherin-dark);
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--slytherin-light);
+  border-radius: 5px;
+  font-size: 16px;
+  background: white;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--slytherin-green);
+  color: var(--gold);
+  border: none;
+  border-radius: 5px;
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.submit-btn:hover {
+  background: var(--slytherin-dark);
+}
+
+.message {
+  margin-top: 15px;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.message.error {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.message.success {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+/* Diary Page */
+#diary-page {
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect fill="%23f4e4bc" width="200" height="200"/><rect fill="%23d4c4a0" x="10" y="10" width="180" height="180" opacity="0.3"/></svg>');
+  background-size: cover;
+}
+
+.diary-header {
+  background: var(--slytherin-green);
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 3px solid var(--gold);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+#welcome-user {
+  color: var(--gold);
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+}
+
+.small-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s;
+}
+
+.small-btn:hover {
+  background: var(--gold);
+  color: var(--slytherin-dark);
+}
+
+.mode-switch {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 26px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #555;
+  transition: 0.4s;
+  border-radius: 26px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: var(--gold);
+}
+
+input:checked + .slider:before {
+  transform: translateX(24px);
+}
+
+.mode-label {
+  color: var(--parchment);
+  font-size: 14px;
+}
+
+#mode-status {
+  color: var(--gold);
+  font-weight: bold;
+}
+
+/* Diary Main */
+.diary-main {
+  display: flex;
+  padding: 30px;
+  gap: 30px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.diary-book {
+  flex: 2;
+  background: var(--parchment);
+  border: 3px solid var(--parchment-dark);
+  border-radius: 10px;
+  padding: 30px;
+  box-shadow: 
+    0 10px 30px var(--shadow),
+    inset 0 0 50px rgba(212, 196, 160, 0.5);
+  position: relative;
+}
+
+.diary-book::before {
+  content: '';
+  position: absolute;
+  left: 30px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #c9a66b;
+}
+
+.page-content {
+  margin-bottom: 20px;
+}
+
+#diary-input {
+  width: 100%;
+  min-height: 300px;
+  padding: 20px;
+  padding-left: 40px;
+  background: transparent;
+  border: none;
+  font-family: 'MedievalSharp', 'Noto Serif SC', cursive;
+  font-size: 18px;
+  line-height: 2;
+  color: var(--ink);
+  resize: vertical;
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 31px,
+    #c9a66b 31px,
+    #c9a66b 32px
+  );
+}
+
+#diary-input:focus {
+  outline: none;
+}
+
+#diary-input::placeholder {
+  color: #888;
+  font-style: italic;
+}
+
+.ai-response {
+  background: linear-gradient(135deg, rgba(26, 71, 42, 0.1), rgba(45, 106, 79, 0.1));
+  border: 1px solid var(--slytherin-light);
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.ai-response.hidden {
+  display: none;
+}
+
+.response-header {
+  font-family: 'Cinzel', serif;
+  color: var(--slytherin-green);
+  font-size: 16px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--slytherin-light);
+  padding-bottom: 10px;
+}
+
+.response-content {
+  font-family: 'MedievalSharp', cursive;
+  font-size: 18px;
+  line-height: 1.8;
+  color: var(--slytherin-dark);
+  font-style: italic;
+}
+
+.diary-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.action-btn {
+  padding: 12px 30px;
+  background: var(--slytherin-green);
+  color: var(--gold);
+  border: none;
+  border-radius: 5px;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  background: var(--slytherin-dark);
+  transform: translateY(-2px);
+}
+
+.action-btn.secondary {
+  background: transparent;
+  border: 1px solid var(--slytherin-green);
+  color: var(--slytherin-green);
+}
+
+.action-btn.secondary:hover {
+  background: var(--slytherin-green);
+  color: var(--gold);
+}
+
+/* History Sidebar */
+.diary-history {
+  flex: 1;
+  background: var(--parchment);
+  border: 3px solid var(--parchment-dark);
+  border-radius: 10px;
+  padding: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  box-shadow: 0 10px 30px var(--shadow);
+}
+
+.diary-history h3 {
+  font-family: 'Cinzel', serif;
+  color: var(--slytherin-green);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--gold);
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.no-history {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+}
+
+.history-item {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 3px solid var(--slytherin-green);
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.history-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 5px 15px var(--shadow);
+}
+
+.history-item .date {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.history-item .preview {
+  font-size: 14px;
+  color: var(--ink);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.history-item .ai-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--slytherin-green);
+  color: var(--gold);
+  font-size: 10px;
+  border-radius: 3px;
+  margin-top: 5px;
+}
+
+/* Typing Animation */
+.typing-effect {
+  overflow: hidden;
+  border-right: 2px solid var(--slytherin-green);
+  white-space: nowrap;
+  animation: typing 3s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: var(--slytherin-green) }
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .diary-main {
+    flex-direction: column;
+  }
+
+  .diary-history {
+    max-height: 300px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+
+  .diary-cover {
+    padding: 40px;
+  }
+}
+
+@media (max-width: 600px) {
+  .diary-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .mode-switch {
+    flex-direction: column;
+  }
+
+  #diary-input {
+    padding-left: 20px;
+    font-size: 16px;
+  }
+
+  .diary-book::before {
+    display: none;
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--parchment-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--slytherin-green);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--slytherin-dark);
+}
