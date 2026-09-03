@@ -1,272 +1,393 @@
-document.addEventListener('DOMContentLoaded', () => {
-  const coverPage = document.getElementById('cover-page');
-  const diaryPage = document.getElementById('diary-page');
-  const authModal = document.getElementById('auth-modal');
-  const openDiaryBtn = document.getElementById('open-diary-btn');
-  const closeBtn = document.querySelector('.close');
-  const tabBtns = document.querySelectorAll('.tab-btn');
-  const loginForm = document.getElementById('login-form');
-  const registerForm = document.getElementById('register-form');
-  const authMessage = document.getElementById('auth-message');
-  const logoutBtn = document.getElementById('logout-btn');
-  const welcomeUser = document.getElementById('welcome-user');
-  const aiModeToggle = document.getElementById('ai-mode-toggle');
-  const modeStatus = document.getElementById('mode-status');
-  const diaryInput = document.getElementById('diary-input');
-  const aiResponse = document.getElementById('ai-response');
-  const saveBtn = document.getElementById('save-btn');
-  const clearBtn = document.getElementById('clear-btn');
-  const historyList = document.getElementById('history-list');
+(function () {
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
 
   let currentUser = null;
-  let aiLanguage = 'cn';
+  let currentDiaryId = null;
+  let selectedLanguage = 'zh';
+  let aiEnabled = false;
 
-  checkAuth();
-
-  openDiaryBtn.addEventListener('click', () => {
-    authModal.classList.add('active');
-  });
-
-  closeBtn.addEventListener('click', () => {
-    authModal.classList.remove('active');
-  });
-
-  window.addEventListener('click', (e) => {
-    if (e.target === authModal) {
-      authModal.classList.remove('active');
-    }
-  });
-
-  tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      tabBtns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      
-      const tab = btn.dataset.tab;
-      loginForm.classList.toggle('active', tab === 'login');
-      registerForm.classList.toggle('active', tab === 'register');
-      authMessage.textContent = '';
+  // ====== API Helpers ======
+  async function api(url, opts = {}) {
+    const res = await fetch(url, {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      ...opts,
+      body: opts.body ? JSON.stringify(opts.body) : undefined
     });
-  });
+    return res.json();
+  }
 
-  loginForm.addEventListener('submit', async (e) => {
+  function showToast(msg) {
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function formatDate(d) {
+    const date = new Date(d);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const h = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return `${y}-${m}-${day} ${h}:${min}`;
+  }
+
+  // ====== Cover Page ======
+  async function checkLogin() {
+    const data = await api('/api/auth/me');
+    if (data.loggedIn) {
+      currentUser = data.username;
+      updateCoverForUser();
+    }
+  }
+
+  function updateCoverForUser() {
+    const status = $('#user-status');
+    const greeting = $('#user-greeting');
+    if (currentUser) {
+      status.classList.remove('hidden');
+      greeting.textContent = `Welcome, ${currentUser}`;
+      $('#open-diary-btn').querySelector('.btn-text').textContent = 'Enter the Diary';
+    } else {
+      status.classList.add('hidden');
+      $('#open-diary-btn').querySelector('.btn-text').textContent = 'Open the Diary';
+    }
+  }
+
+  // ====== Auth Modal ======
+  function showAuthModal() {
+    $('#auth-modal').classList.remove('hidden');
+    $$('.auth-tab').forEach(t => t.classList.remove('active'));
+    $$('.auth-form').forEach(f => f.classList.remove('active'));
+    $('.auth-tab[data-tab="login"]').classList.add('active');
+    $('#login-form').classList.add('active');
+    $('#login-username').focus();
+  }
+
+  function hideAuthModal() {
+    $('#auth-modal').classList.add('hidden');
+    $('#login-error').classList.add('hidden');
+    $('#register-error').classList.add('hidden');
+  }
+
+  function switchTab(tab) {
+    $$('.auth-tab').forEach(t => t.classList.remove('active'));
+    $$('.auth-form').forEach(f => f.classList.remove('active'));
+    $(`.auth-tab[data-tab="${tab}"]`).classList.add('active');
+    $(`#${tab === 'login' ? 'login' : 'register'}-form`).classList.add('active');
+  }
+
+  // ====== Login / Register ======
+  async function handleLogin(e) {
     e.preventDefault();
-    const username = document.getElementById('login-username').value;
-    const password = document.getElementById('login-password').value;
+    const username = $('#login-username').value.trim();
+    const password = $('#login-password').value;
+    const errEl = $('#login-error');
+    errEl.classList.add('hidden');
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await response.json();
+    const data = await api('/api/auth/login', {
+      method: 'POST',
+      body: { username, password }
+    });
 
-      if (data.success) {
-        currentUser = data.user;
-        showDiaryPage();
-        authModal.classList.remove('active');
-      } else {
-        showMessage(authMessage, data.error, 'error');
-      }
-    } catch (error) {
-      showMessage(authMessage, 'Connection error', 'error');
-    }
-  });
-
-  registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('reg-username').value;
-    const password = document.getElementById('reg-password').value;
-    aiLanguage = document.getElementById('reg-lang').value;
-
-    try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        currentUser = data.user;
-        showDiaryPage();
-        authModal.classList.remove('active');
-      } else {
-        showMessage(authMessage, data.error, 'error');
-      }
-    } catch (error) {
-      showMessage(authMessage, 'Connection error', 'error');
-    }
-  });
-
-  logoutBtn.addEventListener('click', async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST' });
-      currentUser = null;
-      coverPage.classList.add('active');
-      diaryPage.classList.remove('active');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  });
-
-  aiModeToggle.addEventListener('change', () => {
-    const isOn = aiModeToggle.checked;
-    modeStatus.textContent = isOn ? 'ON' : 'OFF';
-    modeStatus.style.color = isOn ? '#4caf50' : '#f44336';
-  });
-
-  saveBtn.addEventListener('click', saveDiary);
-
-  clearBtn.addEventListener('click', () => {
-    diaryInput.value = '';
-    aiResponse.classList.add('hidden');
-  });
-
-  async function checkAuth() {
-    try {
-      const response = await fetch('/api/auth/check');
-      const data = await response.json();
-      if (data.loggedIn) {
-        currentUser = data.user;
-        showDiaryPage();
-      }
-    } catch (error) {
-      console.error('Auth check error:', error);
-    }
-  }
-
-  function showDiaryPage() {
-    coverPage.classList.remove('active');
-    diaryPage.classList.add('active');
-    welcomeUser.textContent = `Welcome, ${currentUser.username}`;
-    loadHistory();
-  }
-
-  function showMessage(element, text, type) {
-    element.textContent = text;
-    element.className = 'message ' + type;
-    setTimeout(() => {
-      element.textContent = '';
-      element.className = 'message';
-    }, 3000);
-  }
-
-  async function saveDiary() {
-    const content = diaryInput.value.trim();
-    if (!content) {
-      alert('Please write something first');
+    if (data.error) {
+      errEl.textContent = data.error;
+      errEl.classList.remove('hidden');
       return;
     }
 
-    const isAiMode = aiModeToggle.checked;
-    let aiReply = null;
-
-    if (isAiMode) {
-      try {
-        aiResponse.classList.remove('hidden');
-        aiResponse.querySelector('.response-content').textContent = 'Thinking...';
-        
-        const response = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: content, language: aiLanguage })
-        });
-        const data = await response.json();
-
-        if (data.success) {
-          aiReply = data.reply;
-          typewriterEffect(aiResponse.querySelector('.response-content'), aiReply);
-        }
-      } catch (error) {
-        aiResponse.querySelector('.response-content').textContent = 'AI connection error';
-      }
-    } else {
-      aiResponse.classList.add('hidden');
-    }
-
-    try {
-      const response = await fetch('/api/diary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, aiReply, aiMode: isAiMode })
-      });
-      const data = await response.json();
-
-      if (data.success) {
-        diaryInput.value = '';
-        loadHistory();
-      }
-    } catch (error) {
-      alert('Save failed');
-    }
+    currentUser = data.username;
+    hideAuthModal();
+    updateCoverForUser();
+    showToast('Welcome back to the diary');
   }
 
-  async function loadHistory() {
-    try {
-      const response = await fetch('/api/diary');
-      const data = await response.json();
+  async function handleRegister(e) {
+    e.preventDefault();
+    const username = $('#reg-username').value.trim();
+    const password = $('#reg-password').value;
+    const errEl = $('#register-error');
+    errEl.classList.add('hidden');
 
-      if (data.success) {
-        if (data.diaries.length === 0) {
-          historyList.innerHTML = '<p class="no-history">No entries yet</p>';
-        } else {
-          historyList.innerHTML = data.diaries.map(diary => `
-            <div class="history-item" data-id="${diary.id}">
-              <div class="date">${new Date(diary.created_at).toLocaleString()}</div>
-              <div class="preview">${escapeHtml(diary.content)}</div>
-              ${diary.ai_mode ? '<span class="ai-badge">AI</span>' : ''}
-            </div>
-          `).join('');
+    const data = await api('/api/auth/register', {
+      method: 'POST',
+      body: { username, password }
+    });
 
-          document.querySelectorAll('.history-item').forEach(item => {
-            item.addEventListener('click', () => loadDiary(parseInt(item.dataset.id)));
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Load history error:', error);
+    if (data.error) {
+      errEl.textContent = data.error;
+      errEl.classList.remove('hidden');
+      return;
     }
+
+    currentUser = data.username;
+    hideAuthModal();
+    updateCoverForUser();
+    showToast('Your diary has been created');
+  }
+
+  async function handleLogout() {
+    await api('/api/auth/logout', { method: 'POST' });
+    currentUser = null;
+    currentDiaryId = null;
+    updateCoverForUser();
+    showToast('You have logged out');
+  }
+
+  // ====== Diary Page ======
+  function showDiaryPage() {
+    $('#cover-page').classList.remove('active');
+    $('#cover-page').classList.add('hidden');
+    $('#diary-page').classList.remove('hidden');
+    loadDiaryList();
+    newDiary();
+  }
+
+  function showCoverPage() {
+    $('#diary-page').classList.add('hidden');
+    $('#cover-page').classList.remove('hidden');
+    $('#cover-page').classList.add('active');
+  }
+
+  async function loadDiaryList() {
+    const diaries = await api('/api/diary/list');
+    const list = $('#diary-list');
+
+    if (!diaries || diaries.length === 0) {
+      list.innerHTML = '<p class="empty-msg">No entries yet</p>';
+      return;
+    }
+
+    list.innerHTML = diaries.map(d => `
+      <div class="diary-item ${d.id === currentDiaryId ? 'active' : ''}" data-id="${d.id}">
+        <div class="diary-item-date">${formatDate(d.created_at)}</div>
+        <div class="diary-item-preview">${escapeHtml(d.content || 'Empty entry')}</div>
+        <span class="diary-item-mode ${d.mode === 'ai_on' ? 'ai' : 'normal'}">${d.mode === 'ai_on' ? 'AI' : 'Normal'}</span>
+      </div>
+    `).join('');
+
+    list.querySelectorAll('.diary-item').forEach(item => {
+      item.addEventListener('click', () => loadDiary(parseInt(item.dataset.id)));
+    });
   }
 
   async function loadDiary(id) {
-    try {
-      const response = await fetch(`/api/diary/${id}`);
-      const data = await response.json();
+    const diary = await api(`/api/diary/${id}`);
+    if (diary.error) {
+      showToast('Failed to load diary');
+      return;
+    }
 
-      if (data.success) {
-        diaryInput.value = data.diary.content;
-        if (data.diary.ai_reply) {
-          aiResponse.classList.remove('hidden');
-          aiResponse.querySelector('.response-content').textContent = data.diary.ai_reply;
+    currentDiaryId = diary.id;
+    $('#diary-content').textContent = diary.content || '';
+    $('#diary-date').textContent = formatDate(diary.created_at);
+
+    aiEnabled = diary.mode === 'ai_on';
+    $('#ai-toggle').checked = aiEnabled;
+    $('#ai-status').textContent = aiEnabled ? 'ON' : 'OFF';
+
+    const replyArea = $('#ai-reply-area');
+    if (diary.ai_reply) {
+      replyArea.classList.remove('hidden');
+      $('#ai-reply').textContent = diary.ai_reply;
+    } else {
+      replyArea.classList.add('hidden');
+      $('#ai-reply').textContent = '';
+    }
+
+    $$('.diary-item').forEach(item => {
+      item.classList.toggle('active', parseInt(item.dataset.id) === id);
+    });
+  }
+
+  function newDiary() {
+    currentDiaryId = null;
+    $('#diary-content').textContent = '';
+    const now = new Date();
+    $('#diary-date').textContent = formatDate(now);
+    $('#ai-reply-area').classList.add('hidden');
+    $('#ai-reply').textContent = '';
+    aiEnabled = false;
+    $('#ai-toggle').checked = false;
+    $('#ai-status').textContent = 'OFF';
+    $$('.diary-item').forEach(item => item.classList.remove('active'));
+  }
+
+  async function saveDiary() {
+    const content = $('#diary-content').textContent.trim();
+    if (!content) {
+      showToast('Please write something first');
+      return;
+    }
+
+    const aiReply = $('#ai-reply').textContent || null;
+    const mode = aiEnabled ? 'ai_on' : 'ai_off';
+
+    if (currentDiaryId) {
+      await api(`/api/diary/${currentDiaryId}`, {
+        method: 'PUT',
+        body: { content, ai_reply: aiReply, mode }
+      });
+      showToast('Diary saved');
+    } else {
+      const data = await api('/api/diary/save', {
+        method: 'POST',
+        body: { content, ai_reply: aiReply, mode }
+      });
+      if (data.id) {
+        currentDiaryId = data.id;
+        showToast('New diary entry created');
+      }
+    }
+    loadDiaryList();
+  }
+
+  async function deleteDiary() {
+    if (!currentDiaryId) return;
+    if (!confirm('Delete this diary entry?')) return;
+
+    await api(`/api/diary/${currentDiaryId}`, { method: 'DELETE' });
+    currentDiaryId = null;
+    showToast('Diary entry deleted');
+    newDiary();
+    loadDiaryList();
+  }
+
+  // ====== AI Chat ======
+  async function submitToAI() {
+    const content = $('#diary-content').textContent.trim();
+    if (!content) {
+      showToast('Please write something first');
+      return;
+    }
+
+    const submitBtn = $('#submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.querySelector('.submit-text').textContent = 'Thinking...';
+
+    if (aiEnabled) {
+      const replyArea = $('#ai-reply-area');
+      replyArea.classList.remove('hidden');
+      const replyEl = $('#ai-reply');
+      replyEl.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div>';
+
+      try {
+        const data = await api('/api/ai/chat', {
+          method: 'POST',
+          body: { message: content, language: selectedLanguage }
+        });
+
+        if (data.error) {
+          replyEl.textContent = 'The diary remains silent... for now.';
         } else {
-          aiResponse.classList.add('hidden');
+          typeReply(replyEl, data.reply);
         }
+      } catch (err) {
+        replyEl.textContent = 'The diary remains silent... for now.';
       }
-    } catch (error) {
-      console.error('Load diary error:', error);
+    } else {
+      if (!currentDiaryId) {
+        const data = await api('/api/diary/save', {
+          method: 'POST',
+          body: { content, ai_reply: null, mode: 'ai_off' }
+        });
+        if (data.id) currentDiaryId = data.id;
+      } else {
+        await api(`/api/diary/${currentDiaryId}`, {
+          method: 'PUT',
+          body: { content, ai_reply: null, mode: 'ai_off' }
+        });
+      }
+      showToast('Diary saved');
+      loadDiaryList();
     }
+
+    submitBtn.disabled = false;
+    submitBtn.querySelector('.submit-text').textContent = 'Submit to the Diary';
   }
 
-  function typewriterEffect(element, text) {
-    element.textContent = '';
-    let index = 0;
-    const speed = 50;
-    
-    function type() {
-      if (index < text.length) {
-        element.textContent += text.charAt(index);
-        index++;
-        setTimeout(type, speed);
+  function typeReply(el, text) {
+    el.textContent = '';
+    el.classList.add('typing');
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'typing-cursor';
+    el.appendChild(cursor);
+
+    const interval = setInterval(() => {
+      if (i < text.length) {
+        el.textContent = text.substring(0, i + 1);
+        el.appendChild(cursor);
+        i++;
+      } else {
+        clearInterval(interval);
+        el.classList.remove('typing');
+        cursor.remove();
       }
-    }
-    type();
+    }, 40);
   }
 
-  function escapeHtml(text) {
+  // ====== Utility ======
+  function escapeHtml(str) {
     const div = document.createElement('div');
-    div.textContent = text;
+    div.textContent = str;
     return div.innerHTML;
   }
-});
+
+  // ====== Event Listeners ======
+  function init() {
+    checkLogin();
+
+    $('#open-diary-btn').addEventListener('click', () => {
+      if (currentUser) {
+        showDiaryPage();
+      } else {
+        showAuthModal();
+      }
+    });
+
+    $('#logout-btn').addEventListener('click', handleLogout);
+
+    $('#modal-close').addEventListener('click', hideAuthModal);
+    $('.modal-backdrop').addEventListener('click', hideAuthModal);
+
+    $$('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    $('#login-form').addEventListener('submit', handleLogin);
+    $('#register-form').addEventListener('submit', handleRegister);
+
+    $$('.lang-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        $$('.lang-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedLanguage = btn.dataset.lang;
+      });
+    });
+
+    $('#back-cover').addEventListener('click', showCoverPage);
+    $('#new-diary-btn').addEventListener('click', newDiary);
+    $('#save-btn').addEventListener('click', saveDiary);
+    $('#delete-btn').addEventListener('click', deleteDiary);
+    $('#submit-btn').addEventListener('click', submitToAI);
+
+    $('#ai-toggle').addEventListener('change', function () {
+      aiEnabled = this.checked;
+      $('#ai-status').textContent = aiEnabled ? 'ON' : 'OFF';
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveDiary();
+      }
+    });
+  }
+
+  init();
+})();

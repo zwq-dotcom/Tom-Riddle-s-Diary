@@ -4,108 +4,150 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tom Riddle's Diary</title>
-  <link rel="stylesheet" href="css/style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=MedievalSharp&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=UnifrakturMaguntia&family=MedievalSharp&family=Noto+Serif+SC:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div id="app">
     <!-- Cover Page -->
     <div id="cover-page" class="page active">
-      <div class="diary-cover">
-        <div class="slytherin-emblem">🐍</div>
-        <h1 class="title">Tom Riddle's Diary</h1>
-        <p class="subtitle">汤姆·里德尔的日记本</p>
-        <div class="ornament">✦ ✦ ✦</div>
-        <button id="open-diary-btn" class="magic-button">Open the Diary</button>
-        <p class="hint">打开日记本</p>
+      <div class="cover-bg"></div>
+      <div class="cover-content">
+        <div class="slytherin-crest">
+          <div class="crest-shield">
+            <div class="crest-snake">S</div>
+          </div>
+          <div class="crest-banner">SLYTHERIN</div>
+        </div>
+        <h1 class="cover-title">Tom Riddle's</h1>
+        <h2 class="cover-subtitle">Diary</h2>
+        <div class="cover-decoration">~ ~ ~</div>
+        <p class="cover-quote">"I can make things happen... in the world of the diary, of course."</p>
+        <button id="open-diary-btn" class="cover-button">
+          <span class="btn-text">Open the Diary</span>
+          <span class="btn-icon">&#9997;</span>
+        </button>
+        <div id="user-status" class="user-status hidden">
+          <span id="user-greeting"></span>
+          <button id="logout-btn" class="link-btn">Logout</button>
+        </div>
       </div>
+      <div class="cover-vines top-left"></div>
+      <div class="cover-vines top-right"></div>
+      <div class="cover-vines bottom-left"></div>
+      <div class="cover-vines bottom-right"></div>
     </div>
 
-    <!-- Login/Register Modal -->
-    <div id="auth-modal" class="modal">
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal hidden">
+      <div class="modal-backdrop"></div>
       <div class="modal-content">
-        <span class="close">&times;</span>
-        <div class="auth-tabs">
-          <button class="tab-btn active" data-tab="login">Login 登录</button>
-          <button class="tab-btn" data-tab="register">Register 注册</button>
+        <button class="modal-close" id="modal-close">&times;</button>
+        <div class="modal-crest">
+          <div class="mini-snake">S</div>
         </div>
-        
+
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Login</button>
+          <button class="auth-tab" data-tab="register">Register</button>
+        </div>
+
         <form id="login-form" class="auth-form active">
           <div class="form-group">
-            <label for="login-username">Username 用户名</label>
-            <input type="text" id="login-username" required>
+            <label>Username</label>
+            <input type="text" id="login-username" required autocomplete="username" placeholder="Enter your username">
           </div>
           <div class="form-group">
-            <label for="login-password">Password 密码</label>
-            <input type="password" id="login-password" required>
+            <label>Password</label>
+            <input type="password" id="login-password" required autocomplete="current-password" placeholder="Enter your password">
           </div>
-          <button type="submit" class="submit-btn">Login 登录</button>
+          <div id="login-error" class="form-error hidden"></div>
+          <button type="submit" class="submit-btn">Login</button>
         </form>
 
         <form id="register-form" class="auth-form">
           <div class="form-group">
-            <label for="reg-username">Username 用户名</label>
-            <input type="text" id="reg-username" required minlength="3">
+            <label>Username</label>
+            <input type="text" id="reg-username" required autocomplete="username" placeholder="Choose a username">
           </div>
           <div class="form-group">
-            <label for="reg-password">Password 密码</label>
-            <input type="password" id="reg-password" required minlength="6">
+            <label>Password</label>
+            <input type="password" id="reg-password" required autocomplete="new-password" placeholder="Choose a password">
           </div>
-          <div class="form-group">
-            <label for="reg-lang">AI Language AI语言</label>
-            <select id="reg-lang">
-              <option value="cn">中文 Chinese</option>
-              <option value="en">English 英文</option>
-            </select>
-          </div>
-          <button type="submit" class="submit-btn">Register 注册</button>
+          <div id="register-error" class="form-error hidden"></div>
+          <button type="submit" class="submit-btn">Register</button>
         </form>
 
-        <div id="auth-message" class="message"></div>
+        <div class="language-select">
+          <label class="lang-label">AI Language / AI语言</label>
+          <div class="lang-options">
+            <button class="lang-btn active" data-lang="zh">
+              <span class="lang-flag">中文</span>
+            </button>
+            <button class="lang-btn" data-lang="en">
+              <span class="lang-flag">English</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Diary Page -->
-    <div id="diary-page" class="page">
-      <header class="diary-header">
-        <div class="user-info">
-          <span id="welcome-user">Welcome</span>
-          <button id="logout-btn" class="small-btn">Logout 退出</button>
+    <div id="diary-page" class="page hidden">
+      <div class="diary-sidebar">
+        <div class="sidebar-header">
+          <button id="back-cover" class="sidebar-btn back-btn" title="Back to Cover">&#9664;</button>
+          <h3 class="sidebar-title">My Diary</h3>
+          <button id="new-diary-btn" class="sidebar-btn new-btn" title="New Entry">+</button>
         </div>
-        <div class="mode-switch">
-          <label class="switch">
-            <input type="checkbox" id="ai-mode-toggle">
-            <span class="slider"></span>
-          </label>
-          <span class="mode-label">AI Mode: <span id="mode-status">OFF</span></span>
+        <div id="diary-list" class="diary-list">
+          <p class="empty-msg">No entries yet</p>
         </div>
-      </header>
+      </div>
 
-      <main class="diary-main">
-        <div class="diary-book">
-          <div class="page-content">
-            <textarea id="diary-input" placeholder="Write your diary here... 在这里写下你的日记..."></textarea>
+      <div class="diary-main">
+        <div class="diary-toolbar">
+          <div class="mode-switch">
+            <span class="mode-label">AI</span>
+            <label class="switch">
+              <input type="checkbox" id="ai-toggle">
+              <span class="slider"></span>
+            </label>
+            <span class="mode-status" id="ai-status">OFF</span>
           </div>
-          <div id="ai-response" class="ai-response hidden">
-            <div class="response-header">Tom Riddle 汤姆·里德尔</div>
-            <div class="response-content"></div>
-          </div>
-          <div class="diary-actions">
-            <button id="save-btn" class="action-btn">Save 保存</button>
-            <button id="clear-btn" class="action-btn secondary">Clear 清空</button>
+          <div class="toolbar-actions">
+            <span id="diary-date" class="diary-date"></span>
+            <button id="save-btn" class="toolbar-btn" title="Save">&#128190;</button>
+            <button id="delete-btn" class="toolbar-btn delete-btn" title="Delete">&#128465;</button>
           </div>
         </div>
 
-        <aside class="diary-history">
-          <h3>History 历史记录</h3>
-          <div id="history-list" class="history-list">
-            <p class="no-history">No entries yet 暂无记录</p>
+        <div class="diary-paper">
+          <div class="paper-texture"></div>
+          <div class="diary-content-wrapper">
+            <div id="diary-content" class="diary-content" contenteditable="true" spellcheck="false" data-placeholder="Begin writing your diary..."></div>
+            <div id="ai-reply-area" class="ai-reply-area hidden">
+              <div class="ai-reply-divider">
+                <span class="divider-ornament">&#10045;</span>
+              </div>
+              <div id="ai-reply" class="ai-reply"></div>
+            </div>
           </div>
-        </aside>
-      </main>
+          <div class="paper-lines"></div>
+        </div>
+
+        <div class="diary-footer">
+          <button id="submit-btn" class="submit-diary-btn" title="Submit">
+            <span class="submit-text">Submit to the Diary</span>
+            <span class="submit-icon">&#9998;</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="js/app.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>

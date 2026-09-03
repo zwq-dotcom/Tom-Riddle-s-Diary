@@ -1,6 +1,3 @@
 node_modules/
-database/*.db
 .env
-*.log
-.DS_Store
-Thumbs.db
+*.db

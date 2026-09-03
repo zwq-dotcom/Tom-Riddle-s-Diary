@@ -1,24 +1,30 @@
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const path = require('path');
-const db = require('./database/db');
-const authRoutes = require('./server/auth');
-const diaryRoutes = require('./server/diary');
-const aiRoutes = require('./server/ai');
+
+require('./db');
+
+const authRoutes = require('./routes/auth');
+const diaryRoutes = require('./routes/diary');
+const aiRoutes = require('./routes/ai');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
-  secret: 'tom-riddle-diary-secret-key',
+  secret: process.env.SESSION_SECRET || 'diary_secret_key',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 }
+  cookie: {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true
+  }
 }));
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -31,8 +37,6 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-db.initDatabase();
-
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Tom Riddle's Diary server running on http://localhost:${PORT}`);
 });
