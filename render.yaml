@@ -10,9 +10,7 @@ services:
         generateValue: true
       - key: AI_API_KEY
         sync: false
-      - key: TURSO_DATABASE_URL
-        sync: false
-      - key: TURSO_AUTH_TOKEN
+      - key: DATABASE_URL
         sync: false
       - key: AI_API_URL
         value: https://api.deepseek.com/chat/completions

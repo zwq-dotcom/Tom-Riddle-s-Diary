@@ -2,70 +2,68 @@ const path = require('path');
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  id SERIAL PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS diaries (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   content TEXT NOT NULL DEFAULT '',
   ai_reply TEXT DEFAULT NULL,
   mode TEXT DEFAULT 'ai_off',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 `;
 
 let db;
 
-if (process.env.TURSO_DATABASE_URL) {
-  // ===== Mode 1: Turso cloud database (persistent, free) =====
-  const { createClient } = require('@libsql/client');
-  const client = createClient({
-    url: process.env.TURSO_DATABASE_URL,
-    authToken: process.env.TURSO_AUTH_TOKEN
+if (process.env.DATABASE_URL) {
+  // ===== Mode 1: Neon/Postgres cloud database (persistent, free) =====
+  const { Pool } = require('pg');
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.PGSSL === 'disable' ? false : { rejectUnauthorized: false }
   });
 
-  function rowsToObjects(result) {
-    return result.rows.map(row => {
-      const o = {};
-      for (const col of result.columns) o[col] = row[col];
-      return o;
-    });
+  function toPg(sql) {
+    let i = 0;
+    return sql.replace(/\?/g, () => '$' + (++i));
   }
 
   db = {
     prepare(sql) {
+      const pgSql = toPg(sql);
+      const isInsert = /^\s*INSERT/i.test(sql);
       return {
         async get(...params) {
-          const r = await client.execute({ sql, args: params });
-          const rows = rowsToObjects(r);
-          return rows[0] || undefined;
+          const r = await pool.query(pgSql, params);
+          return r.rows[0] || undefined;
         },
         async all(...params) {
-          const r = await client.execute({ sql, args: params });
-          return rowsToObjects(r);
+          const r = await pool.query(pgSql, params);
+          return r.rows;
         },
         async run(...params) {
-          const r = await client.execute({ sql, args: params });
-          return {
-            lastInsertRowid: Number(r.lastInsertRowid || 0),
-            changes: r.rowsAffected || 0
-          };
+          if (isInsert) {
+            const r = await pool.query(pgSql + ' RETURNING id', params);
+            return { lastInsertRowid: r.rows[0] ? r.rows[0].id : 0, changes: r.rowCount };
+          }
+          const r = await pool.query(pgSql, params);
+          return { lastInsertRowid: 0, changes: r.rowCount };
         }
       };
     },
     async init() {
       const statements = SCHEMA.split(';').map(s => s.trim()).filter(Boolean);
       for (const sql of statements) {
-        await client.execute(sql);
+        await pool.query(sql);
       }
     }
   };
 } else if (process.env.VERCEL) {
-  // ===== Mode 2: in-memory (fallback when no Turso on serverless) =====
+  // ===== Mode 2: in-memory (fallback when no cloud DB on serverless) =====
   const store = { users: [], diaries: [], nextUserId: 1, nextDiaryId: 1 };
 
   db = {
@@ -122,7 +120,23 @@ if (process.env.TURSO_DATABASE_URL) {
   const sqlite = new Database(dbPath);
   sqlite.pragma('journal_mode = WAL');
   sqlite.pragma('foreign_keys = ON');
-  sqlite.exec(SCHEMA);
+  sqlite.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS diaries (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      content TEXT NOT NULL DEFAULT '',
+      ai_reply TEXT DEFAULT NULL,
+      mode TEXT DEFAULT 'ai_off',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+  `);
 
   db = {
     prepare(sql) {
