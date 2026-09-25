@@ -19,7 +19,67 @@ CREATE TABLE IF NOT EXISTS diaries (
 
 let db;
 
-if (process.env.DATABASE_URL) {
+if (process.env.TURSO_DATABASE_URL) {
+  // ===== Mode 0: Turso cloud SQLite (persistent, free) =====
+  const { createClient } = require('@libsql/client');
+  const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN
+  });
+
+  function rowsToObjects(result) {
+    return result.rows.map(row => {
+      const o = {};
+      for (const col of result.columns) o[col] = row[col];
+      return o;
+    });
+  }
+
+  db = {
+    prepare(sql) {
+      return {
+        async get(...params) {
+          const r = await client.execute({ sql, args: params });
+          const rows = rowsToObjects(r);
+          return rows[0] || undefined;
+        },
+        async all(...params) {
+          const r = await client.execute({ sql, args: params });
+          return rowsToObjects(r);
+        },
+        async run(...params) {
+          const r = await client.execute({ sql, args: params });
+          return {
+            lastInsertRowid: Number(r.lastInsertRowid || 0),
+            changes: r.rowsAffected || 0
+          };
+        }
+      };
+    },
+    async init() {
+      const statements = `
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          password TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS diaries (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          content TEXT NOT NULL DEFAULT '',
+          ai_reply TEXT DEFAULT NULL,
+          mode TEXT DEFAULT 'ai_off',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+      `.split(';').map(s => s.trim()).filter(Boolean);
+      for (const sql of statements) {
+        await client.execute(sql);
+      }
+    }
+  };
+} else if (process.env.DATABASE_URL) {
   // ===== Mode 1: Neon/Postgres cloud database (persistent, free) =====
   const { Pool } = require('pg');
   const pool = new Pool({
