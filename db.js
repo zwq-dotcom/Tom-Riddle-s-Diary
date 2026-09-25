@@ -175,7 +175,17 @@ if (process.env.TURSO_DATABASE_URL) {
   };
 } else {
   // ===== Mode 3: local SQLite (development) =====
-  const Database = require('better-sqlite3');
+  let Database;
+  try {
+    Database = require('better-sqlite3');
+  } catch (e) {
+    throw new Error(
+      'DB not configured: TURSO_DATABASE_URL is not set (or TURSO_AUTH_TOKEN missing), ' +
+      'and better-sqlite3 is unavailable (dev-only dependency). ' +
+      'Hosting: set TURSO_DATABASE_URL + TURSO_AUTH_TOKEN in env vars, then redeploy. ' +
+      'Local: run npm install.'
+    );
+  }
   const dbPath = path.join(__dirname, 'diary.db');
   const sqlite = new Database(dbPath);
   sqlite.pragma('journal_mode = WAL');
