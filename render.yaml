@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: tom-riddle-diary
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_API_URL
+        value: https://api.deepseek.com/chat/completions
+      - key: AI_MODEL
+        value: deepseek-chat

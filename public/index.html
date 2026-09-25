@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tom Riddle's Diary</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=UnifrakturMaguntia&family=MedievalSharp&family=Noto+Serif+SC:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+  <link href="https://fonts.loli.net/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Caveat:wght@400;600&family=Long+Cang&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <noscript><link href="https://fonts.loli.net/css2?family=Cinzel:wght@400;700&family=Cinzel+Decorative:wght@400;700&family=Caveat:wght@400;600&family=Long+Cang&family=Ma+Shan+Zheng&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet"></noscript>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -24,14 +23,14 @@
         <h1 class="cover-title">Tom Riddle's</h1>
         <h2 class="cover-subtitle">Diary</h2>
         <div class="cover-decoration">~ ~ ~</div>
-        <p class="cover-quote">"I can make things happen... in the world of the diary, of course."</p>
+        <p class="cover-quote" data-i18n="cover_quote">"I can make things happen... in the world of the diary, of course."</p>
         <button id="open-diary-btn" class="cover-button">
-          <span class="btn-text">Open the Diary</span>
+          <span class="btn-text" data-i18n="open_diary">打开日记</span>
           <span class="btn-icon">&#9997;</span>
         </button>
         <div id="user-status" class="user-status hidden">
-          <span id="user-greeting"></span>
-          <button id="logout-btn" class="link-btn">Logout</button>
+          <span class="user-greeting-wrap">Welcome, <span id="user-greeting"></span></span>
+          <button id="logout-btn" class="link-btn" data-i18n="logout">退出登录</button>
         </div>
       </div>
       <div class="cover-vines top-left"></div>
@@ -50,38 +49,38 @@
         </div>
 
         <div class="auth-tabs">
-          <button class="auth-tab active" data-tab="login">Login</button>
-          <button class="auth-tab" data-tab="register">Register</button>
+          <button class="auth-tab active" data-tab="login" data-i18n="tab_login">登录</button>
+          <button class="auth-tab" data-tab="register" data-i18n="tab_register">注册</button>
         </div>
 
         <form id="login-form" class="auth-form active">
           <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="login-username" required autocomplete="username" placeholder="Enter your username">
+            <label data-i18n="label_username">用户名</label>
+            <input type="text" id="login-username" required autocomplete="username" data-i18n-placeholder="placeholder_username">
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="login-password" required autocomplete="current-password" placeholder="Enter your password">
+            <label data-i18n="label_password">密码</label>
+            <input type="password" id="login-password" required autocomplete="current-password" data-i18n-placeholder="placeholder_password">
           </div>
           <div id="login-error" class="form-error hidden"></div>
-          <button type="submit" class="submit-btn">Login</button>
+          <button type="submit" class="submit-btn" data-i18n="btn_login">登录</button>
         </form>
 
         <form id="register-form" class="auth-form">
           <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="reg-username" required autocomplete="username" placeholder="Choose a username">
+            <label data-i18n="label_username">用户名</label>
+            <input type="text" id="reg-username" required autocomplete="username" data-i18n-placeholder="placeholder_choose_username">
           </div>
           <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="reg-password" required autocomplete="new-password" placeholder="Choose a password">
+            <label data-i18n="label_password">密码</label>
+            <input type="password" id="reg-password" required autocomplete="new-password" data-i18n-placeholder="placeholder_choose_password">
           </div>
           <div id="register-error" class="form-error hidden"></div>
-          <button type="submit" class="submit-btn">Register</button>
+          <button type="submit" class="submit-btn" data-i18n="btn_register">注册</button>
         </form>
 
         <div class="language-select">
-          <label class="lang-label">AI Language / AI语言</label>
+          <label class="lang-label" data-i18n="lang_label">语言 / Language</label>
           <div class="lang-options">
             <button class="lang-btn active" data-lang="zh">
               <span class="lang-flag">中文</span>
@@ -94,16 +93,30 @@
       </div>
     </div>
 
+    <!-- Diary History Panel (mobile) -->
+    <div id="history-panel" class="history-panel hidden">
+      <div class="history-backdrop"></div>
+      <div class="history-drawer">
+        <div class="history-header">
+          <h3 data-i18n="my_diary">我的日记</h3>
+          <button id="history-close" class="history-close-btn">&times;</button>
+        </div>
+        <div id="history-list" class="history-list">
+          <p class="empty-msg" data-i18n="no_entries">暂无日记</p>
+        </div>
+      </div>
+    </div>
+
     <!-- Diary Page -->
     <div id="diary-page" class="page hidden">
       <div class="diary-sidebar">
         <div class="sidebar-header">
-          <button id="back-cover" class="sidebar-btn back-btn" title="Back to Cover">&#9664;</button>
-          <h3 class="sidebar-title">My Diary</h3>
-          <button id="new-diary-btn" class="sidebar-btn new-btn" title="New Entry">+</button>
+          <button id="back-cover" class="sidebar-btn back-btn" title="Back">&#9664;</button>
+          <h3 class="sidebar-title" data-i18n="my_diary">我的日记</h3>
+          <button id="new-diary-btn" class="sidebar-btn new-btn" title="New">+</button>
         </div>
         <div id="diary-list" class="diary-list">
-          <p class="empty-msg">No entries yet</p>
+          <p class="empty-msg" data-i18n="no_entries">暂无日记</p>
         </div>
       </div>
 
@@ -116,8 +129,11 @@
               <span class="slider"></span>
             </label>
             <span class="mode-status" id="ai-status">OFF</span>
+            <span class="ai-link-status" id="ai-link-status" title="AI connection">&#9679;</span>
           </div>
           <div class="toolbar-actions">
+            <button id="mobile-new-btn" class="toolbar-btn mobile-only" title="New">+</button>
+            <button id="mobile-history-btn" class="toolbar-btn mobile-only" title="History">&#9776;</button>
             <span id="diary-date" class="diary-date"></span>
             <button id="save-btn" class="toolbar-btn" title="Save">&#128190;</button>
             <button id="delete-btn" class="toolbar-btn delete-btn" title="Delete">&#128465;</button>
@@ -126,21 +142,19 @@
 
         <div class="diary-paper">
           <div class="paper-texture"></div>
-          <div class="diary-content-wrapper">
-            <div id="diary-content" class="diary-content" contenteditable="true" spellcheck="false" data-placeholder="Begin writing your diary..."></div>
-            <div id="ai-reply-area" class="ai-reply-area hidden">
-              <div class="ai-reply-divider">
-                <span class="divider-ornament">&#10045;</span>
-              </div>
-              <div id="ai-reply" class="ai-reply"></div>
+          <div class="diary-scroll">
+            <div id="diary-blocks" class="diary-blocks"></div>
+            <div id="diary-content" class="diary-content" contenteditable="true" spellcheck="false" data-i18n-placeholder="placeholder_write"></div>
+            <div id="ai-typing" class="ai-typing hidden">
+              <div class="loading-dots"><span></span><span></span><span></span></div>
             </div>
           </div>
           <div class="paper-lines"></div>
         </div>
 
         <div class="diary-footer">
+          <span class="footer-hint" data-i18n="footer_hint">在羊皮纸上书写，按 Enter 提交给日记本</span>
           <button id="submit-btn" class="submit-diary-btn" title="Submit">
-            <span class="submit-text">Submit to the Diary</span>
             <span class="submit-icon">&#9998;</span>
           </button>
         </div>

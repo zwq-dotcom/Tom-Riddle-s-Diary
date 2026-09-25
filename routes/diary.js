@@ -28,7 +28,7 @@ router.get('/:id', requireAuth, (req, res) => {
 });
 
 router.post('/save', requireAuth, (req, res) => {
-  const { content, ai_reply, mode } = req.body;
+  const { content, ai_reply, mode, messages } = req.body;
   const result = db.prepare(
     'INSERT INTO diaries (user_id, content, ai_reply, mode) VALUES (?, ?, ?, ?)'
   ).run(req.session.userId, content || '', ai_reply || null, mode || 'ai_off');
