@@ -1,0 +1,9 @@
+{
+  "deploy": {
+    "install": "npm install --omit=dev",
+    "runtime": {
+      "type": "dynamic",
+      "entrypoint": "./server.js"
+    }
+  }
+}
