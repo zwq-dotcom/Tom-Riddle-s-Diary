@@ -10,45 +10,45 @@ function requireAuth(req, res, next) {
   next();
 }
 
-router.get('/list', requireAuth, (req, res) => {
-  const diaries = db.prepare(
+router.get('/list', requireAuth, async (req, res) => {
+  const diaries = await db.prepare(
     'SELECT id, content, ai_reply, mode, created_at FROM diaries WHERE user_id = ? ORDER BY created_at DESC'
   ).all(req.session.userId);
   res.json(diaries);
 });
 
-router.get('/:id', requireAuth, (req, res) => {
-  const diary = db.prepare(
+router.get('/:id', requireAuth, async (req, res) => {
+  const diary = await db.prepare(
     'SELECT id, content, ai_reply, mode, created_at FROM diaries WHERE id = ? AND user_id = ?'
-  ).get(req.params.id, req.session.userId);
+  ).get(Number(req.params.id), req.session.userId);
   if (!diary) {
     return res.status(404).json({ error: '日记不存在' });
   }
   res.json(diary);
 });
 
-router.post('/save', requireAuth, (req, res) => {
-  const { content, ai_reply, mode, messages } = req.body;
-  const result = db.prepare(
+router.post('/save', requireAuth, async (req, res) => {
+  const { content, ai_reply, mode } = req.body;
+  const result = await db.prepare(
     'INSERT INTO diaries (user_id, content, ai_reply, mode) VALUES (?, ?, ?, ?)'
   ).run(req.session.userId, content || '', ai_reply || null, mode || 'ai_off');
-  res.json({ success: true, id: result.lastInsertRowid });
+  res.json({ success: true, id: Number(result.lastInsertRowid) });
 });
 
-router.put('/:id', requireAuth, (req, res) => {
+router.put('/:id', requireAuth, async (req, res) => {
   const { content, ai_reply, mode } = req.body;
-  const result = db.prepare(
+  const result = await db.prepare(
     'UPDATE diaries SET content = ?, ai_reply = ?, mode = ? WHERE id = ? AND user_id = ?'
-  ).run(content || '', ai_reply || null, mode || 'ai_off', req.params.id, req.session.userId);
+  ).run(content || '', ai_reply || null, mode || 'ai_off', Number(req.params.id), req.session.userId);
   if (result.changes === 0) {
     return res.status(404).json({ error: '日记不存在' });
   }
   res.json({ success: true });
 });
 
-router.delete('/:id', requireAuth, (req, res) => {
-  const result = db.prepare('DELETE FROM diaries WHERE id = ? AND user_id = ?')
-    .run(req.params.id, req.session.userId);
+router.delete('/:id', requireAuth, async (req, res) => {
+  const result = await db.prepare('DELETE FROM diaries WHERE id = ? AND user_id = ?')
+    .run(Number(req.params.id), req.session.userId);
   if (result.changes === 0) {
     return res.status(404).json({ error: '日记不存在' });
   }

@@ -1,36 +1,95 @@
 const path = require('path');
 
+const SCHEMA = `
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS diaries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  content TEXT NOT NULL DEFAULT '',
+  ai_reply TEXT DEFAULT NULL,
+  mode TEXT DEFAULT 'ai_off',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+`;
+
 let db;
 
-if (process.env.VERCEL) {
+if (process.env.TURSO_DATABASE_URL) {
+  // ===== Mode 1: Turso cloud database (persistent, free) =====
+  const { createClient } = require('@libsql/client');
+  const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN
+  });
+
+  function rowsToObjects(result) {
+    return result.rows.map(row => {
+      const o = {};
+      for (const col of result.columns) o[col] = row[col];
+      return o;
+    });
+  }
+
+  db = {
+    prepare(sql) {
+      return {
+        async get(...params) {
+          const r = await client.execute({ sql, args: params });
+          const rows = rowsToObjects(r);
+          return rows[0] || undefined;
+        },
+        async all(...params) {
+          const r = await client.execute({ sql, args: params });
+          return rowsToObjects(r);
+        },
+        async run(...params) {
+          const r = await client.execute({ sql, args: params });
+          return {
+            lastInsertRowid: Number(r.lastInsertRowid || 0),
+            changes: r.rowsAffected || 0
+          };
+        }
+      };
+    },
+    async init() {
+      const statements = SCHEMA.split(';').map(s => s.trim()).filter(Boolean);
+      for (const sql of statements) {
+        await client.execute(sql);
+      }
+    }
+  };
+} else if (process.env.VERCEL) {
+  // ===== Mode 2: in-memory (fallback when no Turso on serverless) =====
   const store = { users: [], diaries: [], nextUserId: 1, nextDiaryId: 1 };
 
   db = {
     prepare(sql) {
-      const self = this;
       return {
-        get(...params) {
+        async get(...params) {
           if (sql.includes('FROM users WHERE username = ?')) {
             return store.users.find(u => u.username === params[0]) || undefined;
           }
           if (sql.includes('FROM users WHERE id = ?')) {
-            return store.users.find(u => u.id === params[0]) || undefined;
+            return store.users.find(u => u.id == params[0]) || undefined;
           }
           if (sql.includes('FROM diaries WHERE id = ? AND user_id = ?')) {
             return store.diaries.find(d => d.id == params[0] && d.user_id == params[1]) || undefined;
           }
-          if (sql.includes('FROM diaries WHERE user_id = ?')) {
-            return store.diaries.filter(d => d.user_id == params[0]);
-          }
           return undefined;
         },
-        all(...params) {
+        async all(...params) {
           if (sql.includes('FROM diaries WHERE user_id = ?')) {
             return store.diaries.filter(d => d.user_id == params[0]);
           }
           return [];
         },
-        run(...params) {
+        async run(...params) {
           if (sql.includes('INSERT INTO users')) {
             const user = { id: store.nextUserId++, username: params[0], password: params[1], created_at: new Date().toISOString() };
             store.users.push(user);
@@ -42,7 +101,7 @@ if (process.env.VERCEL) {
             return { lastInsertRowid: diary.id, changes: 1 };
           }
           if (sql.includes('UPDATE diaries')) {
-            const d = store.diaries.find(d => d.id == params[3] && d.user_id == params[4]);
+            const d = store.diaries.find(x => x.id == params[3] && x.user_id == params[4]);
             if (d) { d.content = params[0]; d.ai_reply = params[1]; d.mode = params[2]; return { changes: 1 }; }
             return { changes: 0 };
           }
@@ -54,33 +113,27 @@ if (process.env.VERCEL) {
           return { changes: 0 };
         }
       };
-    },
-    exec() {},
-    pragma() {}
+    }
   };
 } else {
+  // ===== Mode 3: local SQLite (development) =====
   const Database = require('better-sqlite3');
   const dbPath = path.join(__dirname, 'diary.db');
-  db = new Database(dbPath);
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      username TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    CREATE TABLE IF NOT EXISTS diaries (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      content TEXT NOT NULL DEFAULT '',
-      ai_reply TEXT DEFAULT NULL,
-      mode TEXT DEFAULT 'ai_off',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    );
-  `);
+  const sqlite = new Database(dbPath);
+  sqlite.pragma('journal_mode = WAL');
+  sqlite.pragma('foreign_keys = ON');
+  sqlite.exec(SCHEMA);
+
+  db = {
+    prepare(sql) {
+      const stmt = sqlite.prepare(sql);
+      return {
+        get(...params) { return Promise.resolve(stmt.get(...params)); },
+        all(...params) { return Promise.resolve(stmt.all(...params)); },
+        run(...params) { return Promise.resolve(stmt.run(...params)); }
+      };
+    }
+  };
 }
 
 module.exports = db;
